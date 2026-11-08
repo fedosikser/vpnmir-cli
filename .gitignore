@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.pyc
+*.log
+*.pid
+account.json
+session.json
+settings.json
+state.json
+locations.json
+xray.json
+*.plist
+build/
+tmp/

@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  secrets-and-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/check-secrets.sh
+      - run: python3 -m py_compile src/linux/vpnmir.py
+
+  macos-build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcrun swiftc -O -framework NetworkExtension -framework CryptoKit src/macos/vpnmir.swift -o /tmp/vpnmir
+      - run: /tmp/vpnmir h
