@@ -26,7 +26,7 @@ vpnmir c
 vpnmir d
 ```
 
-## Autorеnew
+## Autorenew
 
 Режим включён по умолчанию. После подключения запускается фоновый watchdog, который обновляет соединение через 59 минут.
 
@@ -34,6 +34,10 @@ vpnmir d
 vpnmir r status
 vpnmir r on
 vpnmir r off
+vpn r 40
 ```
+
+`vpn r 40` включает режим и задаёт интервал 40 минут. Выбранный интервал
+сохраняется после `off` и повторного `on`.
 
 Лог watchdog: `~/Library/Application Support/vpnmir-cli/autorenew.log`.

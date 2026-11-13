@@ -401,7 +401,7 @@ func usage() {
       vpnmir v|servers <локация>
       vpnmir a|activation [--refresh]
       vpnmir t|token [--refresh]
-      vpnmir r|autorenew on|off|status
+      vpnmir r|autorenew [MINUTES]|on|off|status
       vpnmir h|help
 
     Autorenew включён по умолчанию и обновляет соединение каждые 59 минут.
@@ -440,17 +440,25 @@ do {
     case "token", "t": print(try loginToken(force: args.contains("--refresh")))
     case "autorenew", "renew", "r":
         let action = args.count > 1 ? args[1] : "status"
-        switch action {
-        case "on", "enable":
-            var settings = renewSettings(); settings.enabled = true; settings.intervalSeconds = defaultRenewSeconds
+        if let minutes = Int(action) {
+            guard (1...10_080).contains(minutes) else { throw CLIError.message("Интервал должен быть от 1 до 10080 минут.") }
+            var settings = renewSettings(); settings.enabled = true; settings.intervalSeconds = Double(minutes * 60)
             try saveRenewSettings(settings)
             if (try? loadManager().connection.status) == .connected { try startWatchdog() }
-            print("Autorenew включён: переподключение каждые 59 минут.")
+            print("Autorenew включён: переподключение каждые \(minutes) мин.")
+            break
+        }
+        switch action {
+        case "on", "enable":
+            var settings = renewSettings(); settings.enabled = true
+            try saveRenewSettings(settings)
+            if (try? loadManager().connection.status) == .connected { try startWatchdog() }
+            print("Autorenew включён: переподключение каждые \(Int(settings.intervalSeconds / 60)) мин.")
         case "off", "disable":
             var settings = renewSettings(); settings.enabled = false; try saveRenewSettings(settings); stopWatchdog()
             print("Autorenew выключен.")
         case "status", "s": renewStatus()
-        default: throw CLIError.message("Использование: vpnmir r on|off|status")
+        default: throw CLIError.message("Использование: vpnmir r [MINUTES]|on|off|status")
         }
     case "disconnect", "stop", "d":
         stopWatchdog(); let manager = try loadManager(); manager.connection.stopVPNTunnel()

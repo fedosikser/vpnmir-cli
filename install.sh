@@ -28,6 +28,7 @@ case "$(uname -s)" in
         "$repo_dir/src/macos/vpnmir.swift" -o "$target"
     fi
     codesign --force --sign - "$target" >/dev/null 2>&1 || true
+    ln -sf "$target" "$user_bin/vpn"
     add_path "$HOME/.zshrc"
     ;;
   Linux)
@@ -59,6 +60,7 @@ export VPNMIR_XRAY="$app_dir/xray"
 exec "$venv/bin/python" "$app_dir/vpnmir.py" "\$@"
 EOF
     chmod 0755 "$user_bin/vpnmir"
+    ln -sf "$user_bin/vpnmir" "$user_bin/vpn"
     if [[ "${SHELL:-}" == *zsh ]]; then add_path "$HOME/.zshrc"; else add_path "$HOME/.bashrc"; fi
     ;;
   *)
@@ -70,3 +72,4 @@ esac
 echo "Установлено: $user_bin/vpnmir"
 echo "Откройте новый терминал или выполните: export PATH=\"\$HOME/.local/bin:\$PATH\""
 echo "Справка: vpnmir h"
+echo "Короткое имя: vpn"

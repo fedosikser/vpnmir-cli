@@ -336,7 +336,7 @@ def usage() -> None:
   vpnmir v|servers <локация>
   vpnmir a|activation [--refresh]
   vpnmir t|token [--refresh]
-  vpnmir r|autorenew on|off|status
+  vpnmir r|autorenew [MINUTES]|on|off|status
   vpnmir h|help
 
 Linux-режим запускает локальный SOCKS5-прокси Xray. Autorenew включён по умолчанию.
@@ -390,18 +390,28 @@ def main(argv: list[str]) -> int:
         print(login(force="--refresh" in argv))
     elif command in ("autorenew", "renew", "r"):
         action = argv[1] if len(argv) > 1 else "status"
-        if action in ("on", "enable"):
-            save_settings({"enabled": True, "interval_seconds": RENEW_SECONDS})
+        if action.isdecimal():
+            minutes = int(action)
+            if not 1 <= minutes <= 10_080:
+                raise CLIError("Интервал должен быть от 1 до 10080 минут.")
+            save_settings({"enabled": True, "interval_seconds": minutes * 60})
             if pid_alive(read_pid(XRAY_PID)):
                 start_watchdog()
-            print("Autorenew включён: обновление каждые 59 минут.")
+            print(f"Autorenew включён: обновление каждые {minutes} мин.")
+        elif action in ("on", "enable"):
+            current = settings(); current["enabled"] = True
+            save_settings(current)
+            if pid_alive(read_pid(XRAY_PID)):
+                start_watchdog()
+            print(f"Autorenew включён: обновление каждые {current['interval_seconds'] // 60} мин.")
         elif action in ("off", "disable"):
-            save_settings({"enabled": False, "interval_seconds": RENEW_SECONDS}); stop_pid(WATCHDOG_PID)
+            current = settings(); current["enabled"] = False
+            save_settings(current); stop_pid(WATCHDOG_PID)
             print("Autorenew выключен.")
         elif action in ("status", "s"):
             renew_status()
         else:
-            raise CLIError("Использование: vpnmir r on|off|status")
+            raise CLIError("Использование: vpnmir r [MINUTES]|on|off|status")
     elif command == "__watchdog":
         watchdog()
     else:
